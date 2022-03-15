@@ -32,7 +32,8 @@ GadIN = Y[0:len(X)]
 ##dOHb Arterial Input (%SaO2) - can set bounds of rectangular bolus duration
 y = []
 for i in X:
-    if 10<X[i]<20:
+    if 10<X[i]<40:
+        ##Here, can change hypoxic depth (% expressed as decimal)
         a = 0.23
     else:
         a = 0
@@ -40,23 +41,26 @@ for i in X:
 DeoxyIN = np.array(y)
 
 ##Define biexponential and monoexponential residue functions
+d, d2 = 1, 2
 def residue(x, f, T, t):
     return f*np.exp(-T*(x)) + (1-f)*np.exp(-t*(x))
 def residue2(x, mtt):
     return np.exp(-x/mtt)
     
 ##dOHb Arterial Input (for dOHb - convolve with quickly decaying exponential)
-y1 = np.convolve(DeoxyIN, residue2(X,1.5))
+y1 = np.convolve(DeoxyIN, residue2(X,4.5))
 y1 = np.delete(y1, np.s_[len(X):len(X2)])
 DeoxyIN = ((metrics.auc(X, DeoxyIN))/(metrics.auc(X, y1)))*y1
 
 ##Tissue Input (for Gd then dOHb)
 y2 = np.convolve(GadIN, residue(X,0.92,0.68, 0.05))
 y2 = np.delete(y2, np.s_[len(X):len(X2)])
+y2 = np.pad(y2, (d, 0), 'constant', constant_values=(0, 0))[0:len(X)]
 GadINt = (metrics.auc(X, GadIN)/metrics.auc(X, y2))*y2
 
 y2 = np.convolve(DeoxyIN, residue(X,0.92,0.68, 0.05))
 y2 = np.delete(y2, np.s_[len(X):len(X2)])
+y2 = np.pad(y2, (d, 0), 'constant', constant_values=(0, 0))[0:len(X)]
 DeoxyINt = (metrics.auc(X, DeoxyIN)/metrics.auc(X, y2))*y2
 
 ##Ground Truth Values of CBV, CBF, MTT (Based on Inputs)
@@ -65,10 +69,12 @@ print('Theoretical CBV, MTT, CBF: ', Tiss*4, '%, ', round(metrics.auc(X, residue
 ##Venous Input (for Gd then dOHb)
 y3 = np.convolve(GadIN, residue(X,0.863,0.68, 0.05))
 y3 = np.delete(y3, np.s_[len(X):len(X2)])
+y3 = np.pad(y3, (d2, 0), 'constant', constant_values=(0, 0))[0:len(X)]
 GadINv = (metrics.auc(X, GadIN)/metrics.auc(X, y3))*y3
 
 y3 = np.convolve(DeoxyIN, residue(X,0.863,0.68, 0.05))
 y3 = np.delete(y3, np.s_[len(X):len(X2)])
+y3 = np.pad(y3, (d2, 0), 'constant', constant_values=(0, 0))[0:len(X)]
 DeoxyINv = (metrics.auc(X, DeoxyIN)/metrics.auc(X, y3))*y3
 
 #From Zhao et al 2007 (For hematocrit of 0.44) (alternative is 20.7 from Zhao)
@@ -208,13 +214,13 @@ OxR2Vein = (-1/TE)*np.log((S_Vein_dhb/S_Vein_dhb[0]))
 Area_Tissue = metrics.auc(X, GadR2T)
 Area_Arterial = metrics.auc(X, GadR2Art)
 CBVgad=Area_Tissue/Area_Arterial
-print("CBVgad = ", round(CBVgad, 4))
+print("CBVgad = ", round(CBVgad*100, 4), '%')
 
 ##CBV Calculations - dOHb
 Area_Tissue = metrics.auc(X, OxR2T)
 Area_Arterial = metrics.auc(X, OxR2Art)
 CBVox=Area_Tissue/Area_Arterial
-print("CBVdOHb = ", round(CBVox, 4))
+print("CBVdOHb = ", round(CBVox*100, 4), '%')
 
 
 ##CBF and MTT Calculations
