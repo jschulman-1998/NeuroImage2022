@@ -67,12 +67,12 @@ DeoxyINt = (metrics.auc(X, DeoxyIN)/metrics.auc(X, y2))*y2
 print('Theoretical CBV, MTT, CBF: ', Tiss*4, '%, ', round(metrics.auc(X, residue2(X,3)), 2), ', ', (Tiss*0.04)/round(metrics.auc(X, residue2(X,3))))
 
 ##Venous Input (for Gd then dOHb)
-y3 = np.convolve(GadIN, residue(X,0.863,0.68, 0.05))
+y3 = np.convolve(GadIN, residue2(X,4))
 y3 = np.delete(y3, np.s_[len(X):len(X2)])
 y3 = np.pad(y3, (d2, 0), 'constant', constant_values=(0, 0))[0:len(X)]
 GadINv = (metrics.auc(X, GadIN)/metrics.auc(X, y3))*y3
 
-y3 = np.convolve(DeoxyIN, residue(X,0.863,0.68, 0.05))
+y3 = np.convolve(DeoxyIN, residue2(X,4))
 y3 = np.delete(y3, np.s_[len(X):len(X2)])
 y3 = np.pad(y3, (d2, 0), 'constant', constant_values=(0, 0))[0:len(X)]
 DeoxyINv = (metrics.auc(X, DeoxyIN)/metrics.auc(X, y3))*y3
